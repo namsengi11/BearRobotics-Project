@@ -66,7 +66,7 @@ class ATMController:
 
   # returns balance of account currently accessed
   # returns 0 if no account is accessible
-  def checkBalance(self):
+  def checkBalance(self) -> int:
     if self.currentInfo["accountNumber"] == "":
       return 0
     return self.BankAPI.checkBalance(self.currentInfo["accountNumber"])
