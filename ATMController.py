@@ -1,13 +1,17 @@
 from src.CardReader import CardReader
 from src.BankAPI import BankAPI
+from src.CashBin import CashBin
 
 class ATMController:
-  def __init__(self, cardReader: CardReader, bankAPI: BankAPI) -> None:
+  def __init__(self, cardReader: CardReader, bankAPI: BankAPI, cashBin: CashBin) -> None:
     # have dedicated reader to ATM
     self.cardReader = cardReader
 
     # Establish connection to BANKAPI
     self.BankAPI = bankAPI
+
+    # Connect to internal cashbin
+    self.cashBin = cashBin
 
     self.currentInfo = {
       "cardNumber": "",
@@ -42,9 +46,28 @@ class ATMController:
       print(e)
       return False
 
+  # return list of accounts associated with card inserted
+  def getConnectedAccounts(self) -> list:
+    if self.currentInfo["enteredCorrectPin"]:
+      return self.BankAPI.getConnectedAccounts(self.currentInfo["cardNumber"])
+    else:
+      return []
+  # select account for transaction in ATM
+  # returns success of operation
+  def selectAccount(self, idx: int) -> None:
+    accountList = self.getConnectedAccounts()
+    try:
+      self.currentInfo["accountNumber"] = accountList[idx]
+      return True
+    except Exception as e:
+      print(e)
+      self.currentInfo["accountNumber"] = ""
+      return False
+
   # ends current transaction and resets information stored
   def endTransaction(self) -> None:
     self.cardReader.removeCard()
+    # clear internal cache
     self.currentInfo = {
       "cardNumber": "",
       "enteredCorrectPin": False,
