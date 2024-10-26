@@ -64,6 +64,43 @@ class ATMController:
       self.currentInfo["accountNumber"] = ""
       return False
 
+  # returns balance of account currently accessed
+  # returns 0 if no account is accessible
+  def checkBalance(self):
+    if self.currentInfo["accountNumber"] == "":
+      return 0
+    return self.BankAPI.checkBalance(self.currentInfo["accountNumber"])
+
+  # adds amount to accessed account
+  # return whether if deposit is successful
+  def deposit(self, amount: int) -> bool:
+    if self.currentInfo["accountNumber"] == "":
+      return False
+
+    try:
+      self.BankAPI.depositToAccount(self.currentInfo["accountNumber"], amount)
+      self.cashBin.addToBalance(amount)
+      return True
+    except Exception as e:
+      print(e)
+      return False
+
+  # withdraws amount from account
+  # returns success of operation
+  def withdraw(self, amount: int) -> bool:
+    if self.currentInfo["accountNumber"] == "":
+      return False
+    elif not self.cashBin.haveMoreThan(amount):
+      return False
+
+    try:
+      self.BankAPI.withdrawFromAccount(self.currentInfo["accountNumber"], amount)
+      self.cashBin.removeFromBalance(amount)
+      return True
+    except Exception as e:
+      print(e)
+      return False
+
   # ends current transaction and resets information stored
   def endTransaction(self) -> None:
     self.cardReader.removeCard()

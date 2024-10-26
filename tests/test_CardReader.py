@@ -15,7 +15,8 @@ def test_readCard_withoutCard():
   try:
     cardReader.readCard()
   except Exception as e:
-    assert isinstance(e, Exception) == True
+    assert cardReader.haveCard == False
+    assert cardReader.cardNum == ""
 
 def test_removeCard():
   cardReader.insertCard("1111")
@@ -26,4 +27,5 @@ def test_removeCard():
   try:
     cardReader.readCard()
   except Exception as e:
-    assert isinstance(e, Exception)
+    assert cardReader.haveCard == False
+    assert cardReader.cardNum == ""

@@ -5,7 +5,7 @@ from src.CashBin import CashBin
 
 cardReader = CardReader()
 bankAPI = BankAPI()
-cashBin = CashBin()
+cashBin = CashBin(1000)
 controller = ATMController(cardReader, bankAPI, cashBin)
 
 def test_readCard():
@@ -79,6 +79,68 @@ def test_selectAccount_validCard():
 
   assert controller.selectAccount(2) == False
   assert controller.currentInfo["accountNumber"] == ""
+
+def test_deposit():
+  accountAccessed = controller.currentInfo["accountNumber"] = "123-11"
+
+  originalAccBalance = bankAPI.accBalance[accountAccessed]
+  originalCashBinBalance = cashBin.balance
+  assert controller.deposit(1000) == True
+  assert originalCashBinBalance + 1000 == cashBin.balance
+  assert bankAPI.accBalance[accountAccessed] == originalAccBalance + 1000
+
+def test_deposit_badAccountNum():
+  # assume error in cache
+  controller.currentInfo["accountNumber"] = "123"
+  accountAccessed = controller.currentInfo["accountNumber"]
+  originalCashBinBalance = cashBin.balance
+  originalAcc = bankAPI.accBalance
+
+  assert controller.deposit(1000) == False
+  assert originalCashBinBalance == cashBin.balance
+  assert originalAcc == bankAPI.accBalance
+
+def test_withdraw():
+  accountAccessed = controller.currentInfo["accountNumber"] = "123-11"
+
+  originalAccBalance = bankAPI.accBalance[accountAccessed]
+  originalCashBinBalance = cashBin.balance
+  assert controller.withdraw(50) == True
+  assert originalCashBinBalance - 50 == cashBin.balance
+  assert bankAPI.accBalance[accountAccessed] == originalAccBalance - 50
+
+def test_withdraw_wrongAccount():
+  accountAccessed = controller.currentInfo["accountNumber"] = "1"
+  originalAccBalance = bankAPI.accBalance
+  originalCashBinBalance = cashBin.balance
+
+  try:
+    controller.withdraw(50)
+  except Exception as e:
+    assert originalCashBinBalance == cashBin.balance
+    assert bankAPI.accBalance == originalAccBalance
+
+def test_withdraw_noMoneyInAcc():
+  accountAccessed = controller.currentInfo["accountNumber"] = "123-11"
+
+  originalAccBalance = bankAPI.accBalance[accountAccessed]
+  originalCashBinBalance = cashBin.balance
+  try:
+    controller.withdraw(originalAccBalance + 1)
+  except Exception as e:
+    assert originalAccBalance == bankAPI.accBalance[accountAccessed]
+    assert originalCashBinBalance == cashBin.balance
+
+def test_withdraw_noMoneyInCashBin():
+  accountAccessed = controller.currentInfo["accountNumber"] = "123-11"
+
+  originalAccBalance = bankAPI.accBalance[accountAccessed] = cashBin.balance + 2
+  originalCashBinBalance = cashBin.balance
+  try:
+    controller.withdraw(cashBin.balance + 1)
+  except Exception as e:
+    assert originalAccBalance == bankAPI.accBalance[accountAccessed]
+    assert originalCashBinBalance == cashBin.balance
 
 def test_endTransaction():
   controller.endTransaction()
